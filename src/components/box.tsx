@@ -8,7 +8,7 @@ type boxProps = {
 const Box = ({ cell, handleMove }: boxProps) => {
   return (
     //invisible square. state can be null, or X, O.
-    <div onClick={handleMove}> cell {cell} </div>
+    <th onClick={handleMove}> {cell} </th>
   );
 };
 

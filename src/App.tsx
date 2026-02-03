@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { createGame, makeMove, getWinner } from "./tic-tac-toe";
 import Grid from "./components/grid";
+import "./app.css";
 
 function App() {
   const [gameState, setGameState] = useState(getInitialGame());
+  const [winner, setWinner] = useState(null);
 
   useEffect(() => {
-    getWinner(gameState);
+    let win = getWinner(gameState);
   }, [gameState]);
 
   const handleMove = (state: typeof gameState, position: number) => {
@@ -24,9 +26,7 @@ function App() {
 }
 
 function getInitialGame() {
-  let initialGameState = createGame();
-  initialGameState = makeMove(initialGameState, 3);
-  initialGameState = makeMove(initialGameState, 0);
+  const initialGameState = createGame();
   return initialGameState;
 }
 
