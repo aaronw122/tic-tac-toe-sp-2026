@@ -31,7 +31,7 @@ export function changePlayer(player: Player): Player {
 
 export function makeMove(state: GameState, position: number): GameState {
 
-  console.log('position', position)
+  console.log('move made', position)
 
   if (getWinner(state) !== null) {
     throw "Game is already over"

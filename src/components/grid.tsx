@@ -1,12 +1,21 @@
 import Box from "./box";
-import type { Board } from "../tic-tac-toe";
+import type { GameState } from "../tic-tac-toe";
 
-const Grid = ({ board }: { board: Board }) => {
+type handler = (state: GameState, position: number) => void;
+
+type gridProps = {
+  handleMove: handler;
+  gameState: GameState;
+};
+
+const Grid = ({ handleMove, gameState }: gridProps) => {
   return (
     <div>
-      {board.map((el, i) => (
-        <Box key={i} cell={el} />
-      ))}
+      <table>
+        {gameState.board.map((el, i) => (
+          <Box key={i} cell={el} handleMove={() => handleMove(gameState, i)} />
+        ))}
+      </table>
     </div>
   );
 };

@@ -1,9 +1,14 @@
 import { type Cell } from "../tic-tac-toe";
 
-const Box = ({ cell }: { cell: Cell }) => {
+type boxProps = {
+  cell: Cell;
+  handleMove: () => void;
+};
+
+const Box = ({ cell, handleMove }: boxProps) => {
   return (
     //invisible square. state can be null, or X, O.
-    <div> {cell} </div>
+    <div onClick={handleMove}> cell {cell} </div>
   );
 };
 
