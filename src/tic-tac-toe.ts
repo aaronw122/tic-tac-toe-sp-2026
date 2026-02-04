@@ -16,6 +16,8 @@ export type GameState = {
   currentPlayer: Player;
 };
 
+export type Winner = Player | 'CATS'
+
 export function createGame(): GameState {
   return {
     board: [null, null, null, null, null, null, null, null, null],
@@ -31,7 +33,7 @@ export function changePlayer(player: Player): Player {
 
 export function makeMove(state: GameState, position: number): GameState {
 
-  console.log('position', position)
+  console.log('move made', position)
 
   if (getWinner(state) !== null) {
     throw "Game is already over"
@@ -76,7 +78,7 @@ export function makeMove(state: GameState, position: number): GameState {
   return secondNewState
 }
 
-export function getWinner(state: GameState): Player | null {
+export function getWinner(state: GameState): Winner | null {
 
   const win = state.currentPlayer.repeat(3)
   console.log('should be XXX', win)
@@ -100,9 +102,14 @@ export function getWinner(state: GameState): Player | null {
       const check = arr[0] + arr[1] + arr[2]
       console.log('arr', arr)
       if (check === win) {
+        console.log('winner!')
         return state.currentPlayer
       }
     }
   }
+  if (!state.board.includes(null)) {
+    return 'CATS'
+  }
   return null;
+
 }
