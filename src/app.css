@@ -1,14 +1,28 @@
-table {
-    border: 1px solid black;
-    border-collapse: collapse;
-    table-layout: fixed;
+.grid {
+    display: grid;
+    position: relative;
+    margin: 0 auto;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    width: 300px;
+    height: 300px;
 }
 
-th,
-td {
-    border: 1px solid #ddd;
-    height: 50px;
-    width: 50px;
+.box {
+    /* update to make look like sticks*/
+    display: flex;
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
+    justify-content: center;
+    align-items: center;
+}
+
+.box--right {
+    border-right: 2px solid black;
+}
+.box--bottom {
+    border-bottom: 2px solid black;
 }
 
 .app {
