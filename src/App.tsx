@@ -3,6 +3,7 @@ import { createGame, makeMove, getWinner, type Winner } from "./tic-tac-toe";
 import Grid from "./components/grid";
 import Message from "./components/topMessage";
 import "./app.css";
+import services from "./services/index";
 
 function App() {
   const [gameState, setGameState] = useState(createGame());
@@ -15,8 +16,12 @@ function App() {
     setGameState(createGame());
   };
 
-  const handleMove = (state: typeof gameState, position: number) => {
-    const newState = makeMove(state, position);
+  const handleMove = async (
+    player: typeof gameState.currentPlayer,
+    position: number,
+  ) => {
+    const newState = await services.makeMove({ position, player });
+    console.log(newState);
     setGameState(newState);
 
     const winner = getWinner(newState);
@@ -29,7 +34,7 @@ function App() {
 
       setTimeout(() => {
         resetGame();
-      }, 1500);
+      }, 1);
     }
   };
 

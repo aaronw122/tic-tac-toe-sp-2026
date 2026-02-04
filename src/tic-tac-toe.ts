@@ -91,7 +91,6 @@ export function getWinner(state: GameState): Winner | null {
 
   for (let i = 0; i < 8; i++) {
     const str: string = potentialCombinations[i]
-    console.log(str.slice(0, 1))
     // create array with the 3 combinations, check if null. THEN see if all added up is good.
     const arr = [state.board[Number(str.slice(0, 1))], state.board[Number(str.slice(1, 2))], state.board[Number(str.slice(2))]]
 
@@ -111,5 +110,4 @@ export function getWinner(state: GameState): Winner | null {
     return 'CATS'
   }
   return null;
-
 }
