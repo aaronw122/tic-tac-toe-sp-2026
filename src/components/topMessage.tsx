@@ -1,5 +1,5 @@
 const Message = ({ msg }: { msg: string | null }) => {
-  return <p> {msg} </p>;
+  return <h3> {msg} </h3>;
 };
 
 export default Message;

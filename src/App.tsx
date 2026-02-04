@@ -5,24 +5,34 @@ import Message from "./components/topMessage";
 import "./app.css";
 
 function App() {
-  const [gameState, setGameState] = useState(getInitialGame());
+  const [gameState, setGameState] = useState(createGame());
   const [winner, setWinner] = useState<Winner | null>(null);
   const [topMessage, setTopMessage] = useState<string | null>(null);
+
+  const resetGame = () => {
+    setTopMessage(null);
+    setWinner(null);
+    setGameState(createGame());
+  };
 
   const handleMove = (state: typeof gameState, position: number) => {
     const newState = makeMove(state, position);
     setGameState(newState);
+
     const winner = getWinner(newState);
-    if (winner === "O" || winner === "X") {
-      setTopMessage(`${winner} won the game!`);
+    setWinner(winner);
+
+    if (winner !== null) {
+      setTopMessage(
+        winner === "CATS" ? `Cats game` : `${winner} won the game!`,
+      );
+
       setTimeout(() => {
-        setTopMessage(null);
-        setWinner(null);
-        setGameState(createGame());
+        resetGame();
       }, 1500);
     }
-    setWinner(winner);
   };
+
   // TODO: display the gameState, and call `makeMove` when a player clicks a button
   return (
     <div className="app">
@@ -35,11 +45,6 @@ function App() {
       <Grid gameState={gameState} handleMove={handleMove}></Grid>
     </div>
   );
-}
-
-function getInitialGame() {
-  const initialGameState = createGame();
-  return initialGameState;
 }
 
 export default App;

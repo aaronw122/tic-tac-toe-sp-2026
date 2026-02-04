@@ -1,3 +1,5 @@
+bun run build
+
 set -euo pipefail #enables strict mode
 
 CONTEXT="home" #sets variable i already have saved for my home server
