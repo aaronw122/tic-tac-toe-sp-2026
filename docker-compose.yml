@@ -1,0 +1,13 @@
+services:
+  tic_tac:
+    build: .
+    image: tic_tac:latest
+    ports:
+      - "65:80"
+    restart: unless-stopped
+
+#defines service named tic_tac, builds image from Dockerfile in current directory
+#tag the built image as latest
+# exposes ports to host
+# maps host port 65 to container port 65
+#

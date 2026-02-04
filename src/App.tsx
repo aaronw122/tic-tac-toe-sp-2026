@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createGame, makeMove, getWinner, type Winner } from "./tic-tac-toe";
 import Grid from "./components/grid";
 import Message from "./components/topMessage";
