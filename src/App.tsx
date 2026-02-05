@@ -22,6 +22,14 @@ function App() {
   };
 
   const handleMove = async (player: Player, position: number) => {
+    if (gameState!.board[position] !== null) {
+      setTopMessage("error: position already taken");
+      setTimeout(() => {
+        setTopMessage(null);
+      }, 1000);
+      return;
+    }
+
     const newState = await services.makeMove({ position, player });
     console.log("new state full", newState);
     setGameState(newState.gameState);

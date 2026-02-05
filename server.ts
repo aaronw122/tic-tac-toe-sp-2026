@@ -74,9 +74,23 @@ app.post('/game', async (req: Request, res: Response) => {
   const body:Body = req.body
 
   //error handling
-  //
   if (gameState.board[body.position] !== null) {
-    return res.status(404).json({error: "position is taken"})
+    return res.status(400).json({error: "Position is already occupied"})
+  }
+  if (checkWinner() !== null) {
+    return res.status(400).json({error: "Game is already over"})
+  }
+
+  if (!Number.isInteger(body.position)) {
+    return res.status(400).json({error: "Position must be an integer"})
+  }
+
+  if (body.position < 0 || body.position > 8) {
+    return res.status(400).json({error: "Position must be between 0 and 8"})
+  }
+
+  if (gameState.board[body.position] !== null) {
+    return res.status(400).json({error: "Position is already occupied"})
   }
   //modify board at index position to be new value.
   // modify player to be other one
