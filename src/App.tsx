@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  type Winner,
   type GameState,
   type Player,
   type winnerAndState,
@@ -12,7 +11,6 @@ import services from "./services/index";
 
 function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [winner, setWinner] = useState<Winner | null>(null);
   const [topMessage, setTopMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -21,7 +19,6 @@ function App() {
 
   const resetGame = async () => {
     setTopMessage(null);
-    setWinner(null);
     const newGame: winnerAndState = await services.newGame();
     setGameState(newGame.gameState);
   };
@@ -39,12 +36,11 @@ function App() {
 
     setGameState(newState.gameState);
 
-    console.log("newState", newState);
-    setWinner(newState.winner);
-
     if (newState.winner !== null) {
       setTopMessage(
-        winner === "CATS" ? `Cats game` : `${newState.winner} won the game!`,
+        newState.winner === "CATS"
+          ? `Cats game`
+          : `${newState.winner} won the game!`,
       );
       setTimeout(() => {
         resetGame();

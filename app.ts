@@ -50,8 +50,6 @@ const checkWinner = (newBoard: Board) => {
 
   const potentialCombinations = ['012', '345', '678', '036', '147', '258', '246', '048']
 
-  console.log('array used for checkwinner', WinnerAndState.gameState.board)
-
   for (let i = 0; i < 8; i++) {
     const str: string = potentialCombinations[i]
     // create array with the 3 combinations, check if null. THEN see if all added up is good.
@@ -69,7 +67,8 @@ const checkWinner = (newBoard: Board) => {
       }
     }
   }
-  if (!WinnerAndState.gameState.board.includes(null)) {
+  console.log('should be full', WinnerAndState.gameState.board)
+  if (!newBoard.includes(null)) {
     return 'CATS'
   }
   console.log('null')
@@ -124,6 +123,7 @@ app.post('/game', async (req: Request, res: Response) => {
   //fix winner here. jsut update board, THEN change current player after checking for win.
 
   const winner: Winner = checkWinner(newBoard)
+  console.log('should be CATS', winner)
 
   const newGameState: GameState = {
     board: newBoard,
@@ -144,13 +144,15 @@ app.post('/game', async (req: Request, res: Response) => {
 
 app.post('/newGame', async (req: Request, res: Response) => {
 
-  const startingPoint = {
+  const startingPoint:winnerAndState = {
     gameState : {
       board: [null, null, null, null, null, null, null, null, null],
       currentPlayer: "X",
     },
     winner: null
   }
+
+  WinnerAndState = startingPoint
 
   res.json(startingPoint)
 })
