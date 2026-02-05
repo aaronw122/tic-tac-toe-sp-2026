@@ -2,9 +2,7 @@ import axios from 'axios'
 import {type GameState, type Player} from '../tic-tac-toe'
 
 
-const baseURL = 'http://localhost:3000'
-
-
+const baseURL = 'http://localhost:5173'
 
 type Body = {
   position: number,

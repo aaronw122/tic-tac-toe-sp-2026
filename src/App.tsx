@@ -22,14 +22,21 @@ function App() {
   };
 
   const handleMove = async (player: Player, position: number) => {
+    if (gameState!.board[position] !== null) {
+      setTopMessage("error: position already taken");
+      setTimeout(() => {
+        setTopMessage(null);
+      }, 1000);
+      return;
+    }
+
     const newState = await services.makeMove({ position, player });
-    console.log("new state full", newState);
+
     setGameState(newState.gameState);
 
     setWinner(newState.winner);
 
     if (newState.winner !== null) {
-      console.log("inside");
       setTopMessage(
         winner === "CATS" ? `Cats game` : `${newState.winner} won the game!`,
       );
@@ -45,7 +52,7 @@ function App() {
       {gameState ? (
         <div className="app">
           <h1>Tic tac toe</h1>
-          {winner ? (
+          {topMessage ? (
             <Message msg={topMessage}></Message>
           ) : (
             <h3>current player: {gameState.currentPlayer}</h3>
