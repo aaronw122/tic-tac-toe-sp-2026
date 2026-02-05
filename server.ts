@@ -1,6 +1,7 @@
 import express, {type Request, type Response} from 'express';
 import ViteExpress from 'vite-express';
-import { type GameState, type Board, type Player} from './src/tic-tac-toe';
+import { type GameState, type Board, type Player, type Winner} from './src/tic-tac-toe';
+import cors from 'cors';
 
 const app = express()
 
@@ -8,29 +9,60 @@ app.use(express.json())
 
 app.use(express.static('dist'))
 
-app.use(cors({origin: "https://localhost:5173"}))
+app.use(cors({origin: "http://localhost:5173"}))
 
 let gameState: GameState = {
   board: [null, null, null, null, null, null, null, null, null],
   currentPlayer: "X",
 }
 
-type Winner = Player | 'CATS'
 
+const reversePlayer = () => {
+  if (gameState.currentPlayer === 'X')
+    return 'O'
+  else
+    return 'X'
+}
 
-app.get('/game', async (req: Request, res: Response) => {
-  res.json(gameState)
-})
+const checkWinner = () => {
 
-app.get('/winner', async (req: Request, res: Response) => {
-  const body: GameState = req.body
+  console.log('checking winner!')
 
-  const win = body.currentPlayer.repeat(3)
+  const origPlayer = reversePlayer()
+
+  const win = origPlayer.repeat(3)
+
+  console.log('game state', gameState)
 
   const potentialCombinations = ['012', '345', '678', '036', '147', '258', '246', '048']
 
+  for (let i = 0; i < 8; i++) {
+    const str: string = potentialCombinations[i]
+    // create array with the 3 combinations, check if null. THEN see if all added up is good.
+    const arr = [gameState.board[Number(str.slice(0, 1))], gameState.board[Number(str.slice(1, 2))], gameState.board[Number(str.slice(2))]]
 
+    if (arr[0] === null || arr[1] === null ||arr[2] === null ) {
+      continue
+    }
+    else {
+      const check = arr[0] + arr[1] + arr[2]
+      console.log('arr', arr)
+      if (check === win) {
+        console.log('winner!', origPlayer )
+        return origPlayer
+      }
+    }
+  }
 
+  if (!gameState.board.includes(null)) {
+    return 'CATS'
+  }
+  console.log('null')
+  return null;
+}
+
+app.get('/game', async (req: Request, res: Response) => {
+  res.json(gameState)
 })
 
 app.post('/game', async (req: Request, res: Response) => {
@@ -42,9 +74,7 @@ app.post('/game', async (req: Request, res: Response) => {
   const body:Body = req.body
 
   //error handling
-
-  console.log('state test', gameState.board[body.position])
-
+  //
   if (gameState.board[body.position] !== null) {
     return res.status(404).json({error: "position is taken"})
   }
@@ -60,15 +90,20 @@ app.post('/game', async (req: Request, res: Response) => {
     }
   }) as Board;
 
-
   const newGameState: GameState = {
     board: newBoard,
-    currentPlayer: body.player,
+    currentPlayer: reversePlayer()
   }
 
   gameState = newGameState
 
-  res.json(gameState)
+  const winner: Winner | null = checkWinner()
+
+  const stateAndWinner = {
+    gameState: gameState,
+    winner: winner
+  }
+  res.json(stateAndWinner)
 })
 
 app.post('/newGame', async (req: Request, res: Response) => {

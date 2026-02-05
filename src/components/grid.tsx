@@ -35,7 +35,7 @@ const Grid = ({ handleMove, gameState }: gridProps) => {
         <Box
           className="box box--right box--bottom"
           cell={gameState.board[4]}
-          handleMove={() => handleMove(gameState.currentPlayerState, 4)}
+          handleMove={() => handleMove(gameState.currentPlayer, 4)}
         />
         <Box
           className="box box--bottom"

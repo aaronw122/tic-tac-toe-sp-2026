@@ -1,5 +1,5 @@
 import axios from 'axios'
-import {type Player, typeGameState} from '../tic-tac-toe'
+import {type GameState, type Player} from '../tic-tac-toe'
 
 
 const baseURL = 'http://localhost:3000'
@@ -21,4 +21,14 @@ const makeMove = async (newObj: Body) => {
   return response.data
 }
 
-export default {getGame, makeMove}
+const getWinner = async () => {
+  const response = await axios.get(`${baseURL}/winner`)
+  return response.data
+}
+
+const newGame = async (): Promise<GameState> => {
+  const response = await axios.post(`${baseURL}/newGame`)
+  return response.data
+}
+
+export default {getGame, makeMove, getWinner, newGame}
