@@ -44,6 +44,8 @@ const reversePlayer = () => {
 
 const checkWinner = (newBoard: Board) => {
 
+  console.log('newBoard', newBoard)
+
   const currentPlayer = WinnerAndState.gameState.currentPlayer
 
   const win = currentPlayer.repeat(3)
@@ -60,14 +62,12 @@ const checkWinner = (newBoard: Board) => {
     }
     else {
       const check = arr[0] + arr[1] + arr[2]
-      console.log('arr', arr)
       if (check === win) {
         console.log('winner!', currentPlayer )
         return currentPlayer
       }
     }
   }
-  console.log('should be full', WinnerAndState.gameState.board)
   if (!newBoard.includes(null)) {
     return 'CATS'
   }
@@ -86,21 +86,19 @@ app.post('/game', async (req: Request, res: Response) => {
     player: Player
   }
 
-  const body:Body = req.body
+  const body: Body = req.body
 
   //error handling
-  if (WinnerAndState.gameState.board[body.position] !== null) {
-    console.log('gameState', WinnerAndState.gameState.board)
-    return res.status(400).json({error: "Position is already occupied"})
-  }
-  if (checkWinner(WinnerAndState.gameState.board) !== null) {
+
+  if (WinnerAndState.winner !== null) {
     return res.status(400).json({error: "Game is already over"})
   }
-
+  if (WinnerAndState.gameState.board[body.position] !== null && WinnerAndState.gameState.board[body.position] !== undefined) {
+    return res.status(400).json({ error: "Position is already occupied" })
+  }
   if (!Number.isInteger(body.position)) {
     return res.status(400).json({error: "Position must be an integer"})
   }
-
   if (body.position < 0 || body.position > 8) {
     return res.status(400).json({error: "Position must be between 0 and 8"})
   }

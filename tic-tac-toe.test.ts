@@ -1,12 +1,12 @@
-import { describe, it, expect } from "vitest";
-import {type GameState } from "./app.ts";
+import { describe, it, expect, beforeEach, assert } from "vitest";
+import {type GameState, type winnerAndState  } from "./app.ts";
 import app from './app'
 import supertest from 'supertest'
+import { X509Certificate } from "crypto";
 const api = supertest(app)
 
-
 // Helper: apply a sequence of moves to a fresh game
-const playMoves = async (...positions: number[]): Promise<GameState> => {
+const playMoves = async (...positions: number[]): Promise<winnerAndState> => {
   let state = await api.post('/newGame');
   for (const position of positions) {
     const player = state.body.gameState.currentPlayer
@@ -18,18 +18,22 @@ const playMoves = async (...positions: number[]): Promise<GameState> => {
   return state.body;
 }
 
+beforeEach(async () => {
+  await api.post('/newGame')
+})
+
 // ---------------------------------------------------------------------------
 // createGame
 // ---------------------------------------------------------------------------
 describe("createGame", () => {
-  it.only("returns an empty board", () => {
-    const game = createGame();
-    expect(game.board).toEqual([null, null, null, null, null, null, null, null, null]);
+  it("returns an empty board", async  () => {
+    const game = await api.post('/newGame');
+    expect(game.body.gameState.board).toEqual([null, null, null, null, null, null, null, null, null]);
   });
 
-  it("starts with X as the current player", () => {
-    const game = createGame();
-    expect(game.currentPlayer).toBe("X");
+  it("starts with X as the current player", async () => {
+    const game = await api.post('/newGame');
+    expect(game.body.gameState.currentPlayer).toBe("X");
   });
 });
 
@@ -37,53 +41,84 @@ describe("createGame", () => {
 // makeMove
 // ---------------------------------------------------------------------------
 describe("makeMove", () => {
-  it("places the current player's mark on the board", () => {
-    const state = makeMove(createGame(), 0);
-    expect(state.board[0]).toBe("X");
+  it("places the current player's mark on the board", async () => {
+    const currentState = await api.get('/game')
+    const player = currentState.body.gameState.currentPlayer
+    const position = 0;
+    const post = await api.post('/game').send({player, position})
+    expect(post.body.gameState.board[0]).toBe("X");
   });
 
-  it("switches the current player after a move", () => {
-    const state = makeMove(createGame(), 0);
-    expect(state.currentPlayer).toBe("O");
+  it("switches the current player after a move", async () => {
+    const currentState = await api.get('/game')
+    const player = currentState.body.gameState.currentPlayer
+    const position = 0;
+    const post = await api.post('/game').send({ player, position })
+    console.log('post before', post.body)
+    expect(post.body.gameState.currentPlayer).toBe("O");
   });
 
-  it("alternates players across multiple moves", () => {
-    const state = playMoves(0, 1, 2);
+  it("alternates players across multiple moves", async () => {
+    const state = await playMoves(0, 1, 2);
     // X moved at 0, O moved at 1, X moved at 2
-    expect(state.board[0]).toBe("X");
-    expect(state.board[1]).toBe("O");
-    expect(state.board[2]).toBe("X");
-    expect(state.currentPlayer).toBe("O");
+    expect(state.gameState.board[0]).toBe("X");
+    expect(state.gameState.board[1]).toBe("O");
+    expect(state.gameState.board[2]).toBe("X");
+    expect(state.gameState.currentPlayer).toBe("O");
   });
 
-  it("does not mutate the original state", () => {
-    const original = createGame();
-    const next = makeMove(original, 4);
-    expect(original.board[4]).toBeNull();
-    expect(next.board[4]).toBe("X");
+  it("does not mutate the original state", async () => {
+    const currentState = await api.get('/game')
+    const player = currentState.body.gameState.currentPlayer
+    const position = 4
+    const post = await api.post('/game').send({ player, position })
+    expect(currentState.body.gameState.board[4]).toBeNull();
+    expect(post.body.gameState.board[4]).toBe("X");
   });
 
-  it("throws when the position is already occupied", () => {
-    const state = makeMove(createGame(), 0);
-    expect(() => makeMove(state, 0)).toThrow("Position is already occupied");
+  it("throws when the position is already occupied", async () => {
+    const currentState = await api.get('/game')
+    const player = currentState.body.gameState.currentPlayer
+    const position = 2
+    await api.post('/game').send({ player, position })
+    const post2 = await api.post('/game').send({ player, position })
+    assert.deepStrictEqual(post2.body, { error: 'Position is already occupied' });
   });
 
-  it("throws when the position is below 0", () => {
-    expect(() => makeMove(createGame(), -1)).toThrow("Position must be between 0 and 8");
+  it("throws when the position is below 0", async () => {
+    const currentState = await api.get('/game')
+    const player = currentState.body.gameState.currentPlayer
+    const position = -1
+    console.log('position test', position)
+    const post = await api.post('/game').send({ player, position })
+    assert.deepStrictEqual(post.body, { error: "Position must be between 0 and 8" },);
   });
 
-  it("throws when the position is above 8", () => {
-    expect(() => makeMove(createGame(), 9)).toThrow("Position must be between 0 and 8");
+  it("throws when the position is above 8", async () => {
+    const currentState = await api.get('/game')
+    const player = currentState.body.gameState.currentPlayer
+    const position = 9
+    console.log('position test', position)
+    const post = await api.post('/game').send({ player, position })
+    assert.deepStrictEqual(post.body, { error: "Position must be between 0 and 8" },);
   });
 
-  it("throws when the position is not an integer", () => {
-    expect(() => makeMove(createGame(), 1.5)).toThrow("Position must be an integer");
+  it("throws when the position is not an integer", async () => {
+    const currentState = await api.get('/game')
+    const player = currentState.body.gameState.currentPlayer
+    const position = 2.5
+    console.log('position test', position)
+    const post = await api.post('/game').send({ player, position })
+    assert.deepStrictEqual(post.body, { error: "Position must be an integer" },);
   });
 
-  it("throws when the game is already won", () => {
+  it("throws when the game is already won", async () => {
     // X wins with top row: X(0), O(3), X(1), O(4), X(2)
-    const state = playMoves(0, 3, 1, 4, 2);
-    expect(() => makeMove(state, 8)).toThrow("Game is already over");
+    const state = await playMoves(0, 3, 1, 4, 2);
+    const player = state.gameState.currentPlayer
+    const position = 2
+    const post = await api.post('/game').send({ player, position })
+    assert.deepStrictEqual(post.body, { error: "Game is already over" },);
   });
 });
 
@@ -91,77 +126,83 @@ describe("makeMove", () => {
 // getWinner
 // ---------------------------------------------------------------------------
 describe("getWinner", () => {
-  it("returns null for an empty board", () => {
-    expect(getWinner(createGame())).toBeNull();
+  it("returns null for an empty board", async () => {
+    const state = await api.get('/game')
+    assert.strictEqual(state.body.winner, null);
   });
 
-  it("returns null when no one has won yet", () => {
+  it("returns null when no one has won yet", async () => {
     // X(0), O(4)
-    const state = playMoves(0, 4);
-    expect(getWinner(state)).toBeNull();
+    const state = await playMoves(0, 4);
+    assert.strictEqual(state.winner, null);
   });
 
   // --- Row wins ---
-  it("detects X winning with the top row", () => {
+  it("detects X winning with the top row", async () => {
     // X(0), O(3), X(1), O(4), X(2)
-    const state = playMoves(0, 3, 1, 4, 2);
-    expect(getWinner(state)).toBe("X");
+    const state = await playMoves(0, 3, 1, 4, 2);
+    assert.strictEqual(state.winner, 'X');
   });
 
-  it("detects O winning with the middle row", () => {
+  it("detects O winning with the middle row", async () => {
     // X(0), O(3), X(1), O(4), X(6), O(5)
-    const state = playMoves(0, 3, 1, 4, 6, 5);
-    expect(getWinner(state)).toBe("O");
+    const state = await playMoves(0, 3, 1, 4, 6, 5);
+    assert.strictEqual(state.winner, 'O');
   });
 
-  it("detects X winning with the bottom row", () => {
+  it("detects X winning with the bottom row", async () => {
     // X(6), O(0), X(7), O(1), X(8)
-    const state = playMoves(6, 0, 7, 1, 8);
-    expect(getWinner(state)).toBe("X");
+    const state = await playMoves(6, 0, 7, 1, 8);
+    assert.strictEqual(state.winner, 'X');
   });
 
   // --- Column wins ---
-  it("detects X winning with the left column", () => {
+  it("detects X winning with the left column", async () => {
     // X(0), O(1), X(3), O(4), X(6)
-    const state = playMoves(0, 1, 3, 4, 6);
-    expect(getWinner(state)).toBe("X");
+    const state = await playMoves(0, 1, 3, 4, 6);
+    assert.strictEqual(state.winner, 'X');
   });
 
-  it("detects O winning with the middle column", () => {
+  it("detects O winning with the middle column", async () => {
     // X(0), O(1), X(3), O(4), X(8), O(7)
-    const state = playMoves(0, 1, 3, 4, 8, 7);
-    expect(getWinner(state)).toBe("O");
+    const state = await playMoves(0, 1, 3, 4, 8, 7);
+    assert.strictEqual(state.winner, 'O');
   });
 
-  it("detects X winning with the right column", () => {
+  it("detects X winning with the right column", async () => {
     // X(2), O(0), X(5), O(1), X(8)
-    const state = playMoves(2, 0, 5, 1, 8);
-    expect(getWinner(state)).toBe("X");
+    const state = await playMoves(2, 0, 5, 1, 8);
+    assert.strictEqual(state.winner, 'X');
   });
 
   // --- Diagonal wins ---
-  it("detects X winning with the main diagonal", () => {
+  it("detects X winning with the main diagonal", async () => {
     // X(0), O(1), X(4), O(2), X(8)
-    const state = playMoves(0, 1, 4, 2, 8);
-    expect(getWinner(state)).toBe("X");
+    const state = await playMoves(0, 1, 4, 2, 8);
+    assert.strictEqual(state.winner, 'X');
   });
 
-  it("detects O winning with the anti-diagonal", () => {
+  it("detects O winning with the anti-diagonal", async () => {
     // X(0), O(2), X(1), O(4), X(8), O(6)
-    const state = playMoves(0, 2, 1, 4, 8, 6);
-    expect(getWinner(state)).toBe("O");
+    const state = await playMoves(0, 2, 1, 4, 8, 6);
+    assert.strictEqual(state.winner, 'O');
   });
 
   // --- Draw / full board ---
-  it("returns null on a draw (full board, no winner)", () => {
+  it("returns 'CATS' on a draw (full board, no winner)", async () => {
     // X O X
     // X X O
     // O X O
     // Moves: X(0), O(1), X(2), O(5), X(3), O(6), X(4), O(8), X(7)
-    const state = playMoves(0, 1, 2, 5, 3, 6, 4, 8, 7);
-    expect(getWinner(state)).toBeNull();
+    const state = await playMoves(0, 1, 2, 5, 3, 6, 4, 8, 7);
+    assert.strictEqual(state.winner, 'CATS');
+    const fullBoard = [
+      'X', 'O', 'X',
+      'X', 'X', 'O',
+      'O', 'X', 'O',
+    ]
     // Also verify the board is full
-    expect(state.board.every((cell) => cell !== null)).toBe(true);
+    assert.deepStrictEqual(fullBoard, state.gameState.board)
   });
 });
 
@@ -169,47 +210,86 @@ describe("getWinner", () => {
 // Full game sequences
 // ---------------------------------------------------------------------------
 describe("full game sequences", () => {
-  it("plays a complete game where X wins", () => {
-    let state = createGame();
+  it("plays a complete game where X wins", async () => {
+    let state = await api.get('/game')
 
-    state = makeMove(state, 4); // X center
-    expect(state.currentPlayer).toBe("O");
+    let player = state.body.gameState.currentPlayer
 
-    state = makeMove(state, 0); // O top-left
-    state = makeMove(state, 1); // X top-middle
-    state = makeMove(state, 3); // O middle-left
+    let position = 4
 
-    // X hasn't won yet
-    expect(getWinner(state)).toBeNull();
+    state = await api.post('/game').send({ player, position })
 
-    state = makeMove(state, 7); // X bottom-middle
+    assert.strictEqual(state.body.gameState.currentPlayer, "O");
 
-    // X wins: positions 1, 4, 7 (middle column)
-    expect(getWinner(state)).toBe("X");
+    player = state.body.gameState.currentPlayer
+
+    position = 0
+
+    state = await api.post('/game').send({ player, position })
+
+    player = state.body.gameState.currentPlayer
+
+    position = 1
+
+    state = await api.post('/game').send({ player, position })
+
+    player = state.body.gameState.currentPlayer
+
+    position = 3
+
+    state = await api.post('/game').send({ player, position })
+
+    assert.strictEqual(state.body.winner, null)
+
+    player = state.body.gameState.currentPlayer
+
+    position = 7
+
+    state = await api.post('/game').send({ player, position })
+
+    assert.deepStrictEqual(state.body.winner, 'X')
   });
 
-  it("plays a complete game ending in a draw", () => {
+  it("plays a complete game ending in a draw", async () => {
     // X | O | X
     // O | X | X
     // O | X | O
-    const state = playMoves(0, 1, 2, 3, 4, 6, 5, 8, 7);
-    expect(getWinner(state)).toBeNull();
-    expect(state.board.every((cell) => cell !== null)).toBe(true);
+    const state = await playMoves(0, 1, 2, 3, 4, 6, 5, 8, 7);
+
+    assert.strictEqual(state.winner, 'CATS')
+
+    const fullBoard = [
+      'X', 'O', 'X',
+      'O', 'X', 'X',
+      'O', 'X', 'O',
+    ]
+    // Also verify the board is full
+    assert
+      .deepStrictEqual(fullBoard, state.gameState.board)
   });
 
-  it("preserves immutability through a full game", () => {
-    const states: GameState[] = [createGame()];
+  it("preserves immutability through a full game", async () => {
+    let start: winnerAndState = await api.post('/newGame');
+
     // X(4), O(0), X(1), O(3), X(7) — X wins middle column
     const moves = [4, 0, 1, 3, 7];
 
-    for (const move of moves) {
-      states.push(makeMove(states[states.length - 1], move));
+    const arr = [];
+
+    for (const position of moves) {
+      console.log('start body game', start.body.gameState.currentPlayer)
+      arr.push(start.body)
+      const player = start.body.gameState.currentPlayer
+      start = await api
+        .post('/game')
+        .send({ position, player });
     }
 
     // Verify each intermediate state is unchanged
-    expect(states[0].board.every((cell) => cell === null)).toBe(true);
-    expect(states[1].board[4]).toBe("X");
-    expect(states[2].board[0]).toBe("O");
-    expect(states[0].board[4]).toBeNull(); // original still untouched
+    const nullBoard = [null, null, null, null, null, null, null, null, null]
+    assert.deepStrictEqual(arr[0].gameState.board, nullBoard)
+    assert.deepStrictEqual(arr[1].gameState.board[4], 'X')
+    assert.deepStrictEqual(arr[2].gameState.board[0], 'O')
+    assert.deepStrictEqual(arr[0].gameState.board[4], null) // original still untouched
   });
 });

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import {type GameState, type Player, type winnerAndState} from '../tic-tac-toe'
+import {type Player, type winnerAndState} from '../tic-tac-toe'
 
 
 const baseURL = 'http://localhost:5173'
