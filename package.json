@@ -15,12 +15,14 @@
   "dependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/supertest": "^6.0.3",
     "axios": "^1.13.4",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "supertest": "^7.2.2",
     "vite-express": "^0.22.1"
   },
   "devDependencies": {

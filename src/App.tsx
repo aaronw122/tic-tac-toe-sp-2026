@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { type Winner, type GameState, type Player } from "./tic-tac-toe";
+import {
+  type Winner,
+  type GameState,
+  type Player,
+  type StateAndWinner,
+} from "./tic-tac-toe";
 import Grid from "./components/grid";
 import Message from "./components/topMessage";
 import "./app.css";
@@ -11,14 +16,14 @@ function App() {
   const [topMessage, setTopMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    services.getGame().then((r) => setGameState(r));
+    services.getGame().then((r) => setGameState(r.gameState));
   }, []);
 
   const resetGame = async () => {
     setTopMessage(null);
     setWinner(null);
-    const newGame = await services.newGame();
-    setGameState(newGame);
+    const newGame: StateAndWinner = await services.newGame();
+    setGameState(newGame.gameState);
   };
 
   const handleMove = async (player: Player, position: number) => {

@@ -16,11 +16,9 @@ export type GameState = {
   currentPlayer: Player;
 };
 
-export type Winner = Player | 'CATS'
+export type Winner = Player | 'CATS' | null
 
-export function createGame(): GameState {
-  return {
-    board: [null, null, null, null, null, null, null, null, null],
-    currentPlayer: "X",
-  };
+export type winnerAndState = {
+  gameState: GameState,
+  winner: Winner
 }

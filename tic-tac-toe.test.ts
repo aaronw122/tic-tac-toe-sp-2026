@@ -1,21 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { createGame, type GameState } from "./src/tic-tac-toe";
-import {}
+import {type GameState } from "./app.ts";
+import app from './app'
+import supertest from 'supertest'
+const api = supertest(app)
+
 
 // Helper: apply a sequence of moves to a fresh game
-function playMoves(...positions: number[]): GameState {
-  let state = createGame();
-  for (const pos of positions) {
-    state = makeMove(state, pos);
+const playMoves = async (...positions: number[]): Promise<GameState> => {
+  let state = await api.post('/newGame');
+  for (const position of positions) {
+    const player = state.body.gameState.currentPlayer
+    state = await api
+      .post('/game')
+      .send({ player, position });
   }
-  return state;
+  console.log('final return')
+  return state.body;
 }
 
 // ---------------------------------------------------------------------------
 // createGame
 // ---------------------------------------------------------------------------
 describe("createGame", () => {
-  it("returns an empty board", () => {
+  it.only("returns an empty board", () => {
     const game = createGame();
     expect(game.board).toEqual([null, null, null, null, null, null, null, null, null]);
   });
