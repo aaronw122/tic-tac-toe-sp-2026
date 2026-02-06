@@ -1,6 +1,6 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
-import type { Player, Cell, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby } from './types/types';
+import type { Player, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby } from './types/types';
 import {game1, game2, gameStateEmpty} from './utils/testHelper'
 
 const app = express()
@@ -15,35 +15,28 @@ const lobby: Lobby = new Map([
   ['2', game2]
 ])
 
-const shortLobby = new Map([]) as ShortLobby
-
+const shortLobby: ShortLobby = new Map([]) as ShortLobby
 
 for (const [key, value] of lobby) {
   shortLobby.set(key, value.name)
 }
 
-console.log('lobby object', lobby)
+console.log('short lobby', shortLobby)
 
-let WinnerAndState:winnerAndState = {
-  gameState: {
-    board: [null, null, null, null, null, null, null, null, null],
-    currentPlayer: "X",
-  },
-  winner: null
-}
+const reversePlayer = (id : string) => {
+  const game = lobby.get(id)!
 
-const reversePlayer = () => {
-  if (WinnerAndState.gameState.currentPlayer === 'X')
+  if (game.gameState.currentPlayer === 'X')
     return 'O'
   else
     return 'X'
 }
 
-const checkWinner = (newBoard: Board) => {
+const checkWinner = (newBoard: Board, player: Player) => {
 
   console.log('newBoard', newBoard)
 
-  const currentPlayer = WinnerAndState.gameState.currentPlayer
+  const currentPlayer = player
 
   const win = currentPlayer.repeat(3)
 
@@ -74,22 +67,18 @@ const checkWinner = (newBoard: Board) => {
 
 app.get('/lobby', async (req: Request, res: Response) => {
   const toObject = Object.fromEntries(shortLobby)
-  console.log('toArray, specific object', toObject['2'])
+  console.log('short lobby jsonified', toObject )
+  console.log('specific lobby object', toObject[1])
   res.json(toObject)
 })
 
-app.get('/game/:id', async (req: Request, res: Response) => {
-  const id = req.params.id as string
+app.get('/resetLobby', async (req: Request, res: Response) => {
+  lobby.set('1', game1)
+  lobby.set('2', game2)
 
-  const game = lobby.get(id)
-
-  //other error handling???
-  if (game === undefined) {
-    return res.status(400).json({error: 'Game does not exist'})
-  }
-
-  const toObject: winnerAndState = game
-
+  const toObject = Object.fromEntries(lobby)
+  console.log('short lobby jsonified', toObject )
+  console.log('specific lobby object', toObject[1])
   res.json(toObject)
 })
 
@@ -99,6 +88,9 @@ app.post('/lobby', async (req: Request, res: Response) => {
   //comes in as name, then updated here. does it need to be object?
   const name: string = req.body.name
 
+  //check for erorrs
+  // name duplicate
+
   const newGame: winnerAndState = {
     name: name,
     gameState: gameStateEmpty,
@@ -107,18 +99,37 @@ app.post('/lobby', async (req: Request, res: Response) => {
 
   const id: string = crypto.randomUUID()
 
-
-
   lobby.set(id, newGame)
+
+  shortLobby.set(id, name)
+
+  console.log('new object in lobby', lobby.get(id))
+  console.log('new object in shortLobby', shortLobby.get(id))
 
   console.log('new lobby', lobby)
 
-  res.json({id, newGame})
+  res.json({id, name})
 
 })
 
+app.get('/game/:id', async (req: Request, res: Response) => {
+  const id = req.params.id as string
+
+  //bc im only referencing one game object, i don't need to jsonify, already just an object
+  const game = lobby.get(id)
+
+  //other error handling???
+  if (game === undefined) {
+    return res.status(400).json({error: 'Game does not exist'})
+  }
+
+  console.log('game', game)
+
+  res.json(game)
+})
+
 app.post('/game/:id', async (req: Request, res: Response) => {
-  const id = req.params.ide as string
+  const id = req.params.id as string
 
   type Body = {
     position: number,
@@ -127,12 +138,14 @@ app.post('/game/:id', async (req: Request, res: Response) => {
 
   const body: Body = req.body
 
+  const game: winnerAndState = lobby.get(id)!
+
   //error handling
 
-  if (WinnerAndState.winner !== null) {
+  if (game.winner !== null) {
     return res.status(400).json({error: "Game is already over"})
   }
-  if (WinnerAndState.gameState.board[body.position] !== null && WinnerAndState.gameState.board[body.position] !== undefined) {
+  if (game.gameState.board[body.position] !== null && game.gameState.board[body.position] !== undefined) {
     return res.status(400).json({ error: "Position is already occupied" })
   }
   if (!Number.isInteger(body.position)) {
@@ -144,9 +157,9 @@ app.post('/game/:id', async (req: Request, res: Response) => {
   //modify board at index position to be new value.
   // modify player to be other one
 
-  console.log('game state before change', WinnerAndState.gameState.board)
+  console.log('game state before change', game.gameState.board)
 
-  const newBoard = WinnerAndState.gameState.board.map((item, i) => {
+  const newBoard = game.gameState.board.map((item, i) => {
     if (i === body.position) {
       return body.player
     }
@@ -159,29 +172,52 @@ app.post('/game/:id', async (req: Request, res: Response) => {
 
   //fix winner here. jsut update board, THEN change current player after checking for win.
 
-  const winner: Winner = checkWinner(newBoard)
-  console.log('should be CATS', winner)
+  const winner: Winner = checkWinner(newBoard, body.player)
 
   const newGameState: GameState = {
     board: newBoard,
-    currentPlayer: reversePlayer()
+    currentPlayer: reversePlayer(id)
   }
 
-  const newState:winnerAndState = {
+  const newGame: winnerAndState = {
+    name: game.name,
     gameState: newGameState,
     winner: winner
   }
 
-  WinnerAndState = newState
+  lobby.set(id, newGame)
 
-  console.log('WinnerAndState', WinnerAndState)
-  console.log('new state', newState)
-  res.json(newState)
+  console.log('full lobby', lobby)
+  console.log('new state', newGame)
+  //sends back new game object
+  res.json(newGame)
 })
 
-app.post('/newGame', async (req: Request, res: Response) => {
+app.delete('/game/:id', async (req: Request, res: Response) => {
+  const id = req.params.id as string
 
-  const startingPoint:winnerAndState = {
+  //bc im only referencing one game object, i don't need to jsonify, already just an object
+  lobby.delete(id)
+
+  shortLobby.delete(id)
+
+  console.log('new lobby without id', lobby)
+  console.log('new shortlobby without id', shortLobby)
+
+  return res.status(200).end()
+})
+
+app.post('/newGame/:id', async (req: Request, res: Response) => {
+  const id = req.params.id as string
+
+  const game = lobby.get(id)
+
+  if (game === undefined) {
+    return res.status(400).json({error: "gameId no longer valid"})
+  }
+
+  const newGame: winnerAndState = {
+    name: game.name,
     gameState : {
       board: [null, null, null, null, null, null, null, null, null],
       currentPlayer: "X",
@@ -189,9 +225,12 @@ app.post('/newGame', async (req: Request, res: Response) => {
     winner: null
   }
 
-  WinnerAndState = startingPoint
+  lobby.set(id, newGame)
 
-  res.json(startingPoint)
+  console.log('full lobby', lobby)
+  console.log('new state', newGame)
+
+  res.json(newGame)
 })
 
 export default app

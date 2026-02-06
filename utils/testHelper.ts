@@ -1,4 +1,4 @@
-import type { Lobby, winnerAndState, GameState } from '../types/types'
+import type { Lobby, winnerAndState, GameState, ShortLobby } from '../types/types'
 
 export const gameStateEmpty: GameState = {
   board: [null, null, null, null, null, null, null, null, null],
@@ -27,3 +27,8 @@ export const lobbyExample: Lobby = new Map([
   ['2', game2]
   ]
 )
+
+export const shortLobbyAfterRes = {
+  '1': 'revenge tour',
+  '2': 'x vs o'
+}
