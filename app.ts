@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import type { Player, Cell, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby } from './types/types';
-import {game1, game2} from './utils/testHelper'
+import {game1, game2, gameStateEmpty} from './utils/testHelper'
 
 const app = express()
 
@@ -87,14 +87,38 @@ app.get('/game/:id', async (req: Request, res: Response) => {
   if (game === undefined) {
     return res.status(400).json({error: 'Game does not exist'})
   }
-  const toObject: winnerAndState = game
 
-  console.log('toObject', toObject)
+  const toObject: winnerAndState = game
 
   res.json(toObject)
 })
 
-app.post('/game', async (req: Request, res: Response) => {
+app.post('/lobby', async (req: Request, res: Response) => {
+
+  //properly parse so i get the name
+  //comes in as name, then updated here. does it need to be object?
+  const name: string = req.body.name
+
+  const newGame: winnerAndState = {
+    name: name,
+    gameState: gameStateEmpty,
+    winner: null
+  }
+
+  const id: string = crypto.randomUUID()
+
+
+
+  lobby.set(id, newGame)
+
+  console.log('new lobby', lobby)
+
+  res.json({id, newGame})
+
+})
+
+app.post('/game/:id', async (req: Request, res: Response) => {
+  const id = req.params.ide as string
 
   type Body = {
     position: number,
