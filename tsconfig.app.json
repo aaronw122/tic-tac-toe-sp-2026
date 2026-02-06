@@ -24,5 +24,10 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
   },
-  "include": ["src", "./server.ts", "tic-tac-toe.test.ts"],
+  "include": [
+    "src",
+    "./server.ts",
+    "tests/tic-tac-toe.test.ts",
+    "types/types.ts",
+  ],
 }

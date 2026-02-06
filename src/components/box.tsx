@@ -1,4 +1,4 @@
-import { type Cell } from "../tic-tac-toe";
+import { type Cell } from "../../types/types";
 
 type boxProps = {
   cell: Cell;

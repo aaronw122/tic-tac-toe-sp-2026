@@ -19,6 +19,11 @@ export type GameState = {
 export type Winner = Player | 'CATS' | null
 
 export type winnerAndState = {
+  name: string,
   gameState: GameState,
   winner: Winner
 }
+
+export type Lobby = Map<string, winnerAndState>
+
+export type ShortLobby = Map<string, string>

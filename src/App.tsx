@@ -3,7 +3,7 @@ import {
   type GameState,
   type Player,
   type winnerAndState,
-} from "./tic-tac-toe";
+} from "../types/types";
 import Grid from "./components/grid";
 import Message from "./components/topMessage";
 import "./app.css";

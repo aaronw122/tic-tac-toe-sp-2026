@@ -1,5 +1,5 @@
 import Box from "./box";
-import type { GameState, Player } from "../tic-tac-toe";
+import type { GameState, Player } from "../../types/types";
 
 type handler = (player: Player, position: number) => void;
 

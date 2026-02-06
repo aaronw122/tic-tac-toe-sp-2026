@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, assert } from "vitest";
-import {type GameState, type winnerAndState  } from "./app.ts";
-import app from './app'
+import { type Lobby, type GameState, type winnerAndState } from "../types/types.ts";
+import { lobbyExample, gameStateEmpty, game1, game2 } from '../utils/testHelper.ts'
+import app from '../app.ts'
 import supertest from 'supertest'
-import { X509Certificate } from "crypto";
 const api = supertest(app)
 
 // Helper: apply a sequence of moves to a fresh game
@@ -277,7 +277,6 @@ describe("full game sequences", () => {
     const arr = [];
 
     for (const position of moves) {
-      console.log('start body game', start.body.gameState.currentPlayer)
       arr.push(start.body)
       const player = start.body.gameState.currentPlayer
       start = await api
@@ -292,4 +291,87 @@ describe("full game sequences", () => {
     assert.deepStrictEqual(arr[2].gameState.board[0], 'O')
     assert.deepStrictEqual(arr[0].gameState.board[4], null) // original still untouched
   });
-});
+})
+describe('lobby tests', () => {
+  it('lobby returns the right number of games, and in the right shape', async () => {
+    const lobby = await api.get('/lobby');
+    //by default will return two games in lobby
+    const testData = lobbyExample;
+
+    assert.deepStrictEqual(lobby.body, testData)
+  });
+
+  it('lobby can create a new game', async () => {
+    const lobby = await api.get('/lobby');
+
+    const gameName = 'big lebowski'
+
+    //should this be sent as object? or just string??
+    const newGame = await api.post('/lobby').send({ gameName })
+
+    //how lobbyId will look in response to client
+    const id = newGame.body.gameId
+
+    const lobbyAfterPost = await api.get('/lobby');
+
+    //this is how lobby id looks in server
+    assert.deepStrictEqual(lobby.body[id], undefined)
+    assert.deepStrictEqual(lobby.body[id], newGame.body)
+  })
+
+  it('lobby doesnt mutate', async () => {
+
+    const lobby = await api.get('/lobby');
+
+    const lobbyName = 'blazing saddles'
+
+    const lobby3 = {
+      name: "blazing saddles",
+      gameState: gameStateEmpty,
+      winner: null
+    }
+
+    const newGame = await api.post('/lobby').send({ lobbyName })
+
+    const id = newGame.body.gameId
+
+    const lobbyAfterPost = await api.get('/lobby');
+
+    assert.deepStrictEqual(lobby.body[id], undefined)
+    assert.deepStrictEqual(lobbyAfterPost.body[id], lobby3)
+  })
+
+  it('properly fetches individual game', async () => {
+
+    const lobby = await api.get('/lobby');
+
+    const game2 = await api.get('/lobby/2');
+
+    assert.deepStrictEqual(game2.body, lobby.body[2])
+  })
+
+  it('throws an error when gameId doesnt exist', async () => {
+
+    await api.get('/lobby');
+
+    const game10 = await api.get('/lobby/10');
+
+    assert.deepStrictEqual(game10.body, { error: "Game does not exist" })
+  })
+
+  it('delete game works', async () => {
+
+    const lobby = await api.get('/lobby');
+
+    const lobbyAfter = await api.delete('/lobby/2');
+
+    //is available in initial map
+    assert.deepStrictEqual(lobby.body[2], game2)
+
+    //not available in second
+    assert.deepStrictEqual(lobbyAfter.body[2], undefined)
+
+    //game1 still here
+    assert.deepStrictEqual(lobbyAfter.body[2], game1)
+  })
+})

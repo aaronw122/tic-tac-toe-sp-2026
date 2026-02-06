@@ -1,5 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
+import type { Player, Cell, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby } from './types/types';
+import {game1, game2, gameStateEmpty} from './utils/testHelper'
 
 const app = express()
 
@@ -7,25 +9,20 @@ app.use(express.json())
 
 app.use(cors({ origin: "http://localhost:5173" }))
 
-//to do: create a separate schema file with the types so its not messy here.
 
-type Player = "X" | "O";
+const lobby: Lobby = new Map([
+  ['1', game1],
+  ['2', game2]
+])
 
-type Cell = Player | null;
+const shortLobby = new Map([]) as ShortLobby
 
-type Board = [Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell, Cell];
 
-export type GameState = {
-  board: Board;
-  currentPlayer: Player;
-};
-
-type Winner = Player | 'CATS' | null
-
-type winnerAndState = {
-  gameState: GameState,
-  winner: Winner
+for (const [key, value] of lobby) {
+  shortLobby.set(key, value.name)
 }
+
+console.log('lobby object', lobby)
 
 let WinnerAndState:winnerAndState = {
   gameState: {
@@ -75,11 +72,53 @@ const checkWinner = (newBoard: Board) => {
   return null;
 }
 
-app.get('/game', async (req: Request, res: Response) => {
-  res.json(WinnerAndState)
+app.get('/lobby', async (req: Request, res: Response) => {
+  const toObject = Object.fromEntries(shortLobby)
+  console.log('toArray, specific object', toObject['2'])
+  res.json(toObject)
 })
 
-app.post('/game', async (req: Request, res: Response) => {
+app.get('/game/:id', async (req: Request, res: Response) => {
+  const id = req.params.id as string
+
+  const game = lobby.get(id)
+
+  //other error handling???
+  if (game === undefined) {
+    return res.status(400).json({error: 'Game does not exist'})
+  }
+
+  const toObject: winnerAndState = game
+
+  res.json(toObject)
+})
+
+app.post('/lobby', async (req: Request, res: Response) => {
+
+  //properly parse so i get the name
+  //comes in as name, then updated here. does it need to be object?
+  const name: string = req.body.name
+
+  const newGame: winnerAndState = {
+    name: name,
+    gameState: gameStateEmpty,
+    winner: null
+  }
+
+  const id: string = crypto.randomUUID()
+
+
+
+  lobby.set(id, newGame)
+
+  console.log('new lobby', lobby)
+
+  res.json({id, newGame})
+
+})
+
+app.post('/game/:id', async (req: Request, res: Response) => {
+  const id = req.params.ide as string
 
   type Body = {
     position: number,
