@@ -14,12 +14,15 @@ const CreateGame = ({
   newGameName,
 }: createGameTypes) => {
   return (
-    <form onSubmit={() => addGame()}>
-      <div className="createGame">
-        <input onChange={handleNameChange} value={newGameName} />
-        <button type="submit">create game</button>
-      </div>
-    </form>
+    <div>
+      <h2>Create a game</h2>
+      <form onSubmit={() => addGame()}>
+        <div className="createGame">
+          <input onChange={handleNameChange} value={newGameName} />
+          <button type="submit">create game</button>
+        </div>
+      </form>
+    </div>
   );
 };
 
