@@ -1,6 +1,16 @@
-FROM nginx:alpine
+FROM oven/bun:1 as base
 
-COPY dist /usr/share/nginx/html
+WORKDIR /usr
+
+FROM base as install
+
+RUN mkdir -p /temp/dev
+
+COPY package.json bun.lock /temp/dev/
+
+RUN cd /temp/dev && bun install --frozen-lockfile
+
+RUN mkdir -p /
 
 EXPOSE 80
 

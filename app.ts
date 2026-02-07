@@ -1,14 +1,16 @@
 import express, { type Request, type Response } from 'express';
+import expressWs from 'express-ws'
 import cors from 'cors';
-import type { Player, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby } from './types/types';
+import type { Player, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby, WSmap } from './types/types';
 import {game1, game2, gameStateEmpty} from './utils/testHelper'
 
-const app = express()
+const { app } = expressWs(express())
 
 app.use(express.json())
 
 app.use(cors({ origin: "http://localhost:5173" }))
 
+//data stored
 
 const lobby: Lobby = new Map([
   ['1', game1],
@@ -21,7 +23,75 @@ for (const [key, value] of lobby) {
   shortLobby.set(key, value.name)
 }
 
+//initial websocket
+const wsMap: WSmap = new Map<string, Set<WebSocket>>
+
+const sendGameUpdate = (id: string, winnerAndState: winnerAndState) => {
+  const connections = wsMap.get(id)
+
+  console.log('updating game, connections:', connections)
+
+  if (connections) {
+    connections.forEach(ws => {
+      const mock = JSON.stringify({type: 'updateGame', winnerAndState})
+      console.log('ready state?', ws.readyState)
+      //checks status of connection, if open send message
+      if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'updateGame',
+          winnerAndState
+        }));
+      }
+    });
+  }
+}
+
+app.ws('/game/:id/ws', (ws, req) => {
+
+  //should i be doing a type assertion here?
+  const id = req.params.id as string
+
+  if (!lobby.has(id)) {
+    ws.close(1008, 'game not found')
+    return;
+  }
+
+  //check if ws map does not already contian the game id, if so create new id with set
+  if (!wsMap.has(id)) {
+    wsMap.set(id, new Set());
+  }
+
+  //add websocket to Set
+  wsMap.get(id)!.add(ws);
+
+  //send winnerAndState to client
+  const winnerAndState = lobby.get(id);
+  if (winnerAndState) {
+    ws.send(JSON.stringify({
+      type: 'updateGame',
+      winnerAndState
+    }));
+  }
+
+  //handle disconnect when client sends close
+  ws.on('close', () => {
+    const connections = wsMap.get(id)
+    if (connections) {
+      connections.delete(ws)
+      if (connections.size === 0) {
+        wsMap.delete(id)
+      }
+    }
+  })
+
+  ws.on('error', (error) => {
+    console.error('websocket error:', error)
+  })
+})
+
 console.log('short lobby', shortLobby)
+
+  //helper functions
 
 const reversePlayer = (id : string) => {
   const game = lobby.get(id)!
@@ -64,6 +134,8 @@ const checkWinner = (newBoard: Board, player: Player) => {
   console.log('null')
   return null;
 }
+
+//REST requests
 
 app.get('/lobby', async (req: Request, res: Response) => {
   const toObject = Object.fromEntries(shortLobby)
@@ -192,6 +264,8 @@ app.post('/game/:id', async (req: Request, res: Response) => {
 
   lobby.set(id, newGame)
 
+  sendGameUpdate(id, newGame);
+
   console.log('full lobby', lobby)
   console.log('new state', newGame)
   //sends back new game object
@@ -231,6 +305,7 @@ app.post('/newGame/:id', async (req: Request, res: Response) => {
   }
 
   lobby.set(id, newGame)
+  sendGameUpdate(id, newGame);
 
   console.log('full lobby', lobby)
   console.log('new state', newGame)
