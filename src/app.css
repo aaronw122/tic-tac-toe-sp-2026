@@ -87,6 +87,7 @@ h1 {
 .button {
     border-radius: 8px;
     padding: 10px 24px;
+    margin: 20px 10px;
 }
 
 .container {
