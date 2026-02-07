@@ -1,13 +1,15 @@
+import type { switchState } from "../../types/types";
+
 type card = {
   name: string;
   id: string;
-  switchState: (id: string) => void;
+  switchState: switchState;
 };
 
 const GameCard = ({ name, id, switchState }: card) => {
   return (
-    <div className="card" onClick={() => switchState(id)}>
-      <p>{name} </p>
+    <div className="card" onClick={() => switchState(id, "game")}>
+      <p>{name}</p>
     </div>
   );
 };

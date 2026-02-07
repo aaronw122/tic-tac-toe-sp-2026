@@ -31,3 +31,5 @@ export type ShortLobby = Map<string, string>
 export type ShortLobbyReact = {
   [someLabel: string]: string
 }
+
+export type switchState = (view: string, id?: string ) => void;

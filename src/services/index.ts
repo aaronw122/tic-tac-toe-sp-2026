@@ -15,7 +15,7 @@ const getLobby = async () => {
 }
 
 const addGame = async (name: string) => {
-  const response = await axios.post('/lobby', name)
+  const response = await axios.post(`${baseURL}/lobby`, { name })
   return response.data
 }
 

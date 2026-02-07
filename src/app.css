@@ -18,6 +18,30 @@
     font-size: 100px;
 }
 
+.gameView {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+}
+
+.card {
+    display: flex;
+    border: 1px solid black;
+    border-radius: 0%;
+    height: 12vh;
+    width: 30vw;
+    flex-direction: column;
+    margin: 10px;
+    padding: 5px;
+}
+
+.createGame {
+    display: flex;
+    flex-direction: column;
+}
+
 h3 {
     margin-top: 0;
 }
@@ -29,6 +53,10 @@ h3 {
     }
     .box {
         font-size: 40px;
+    }
+    .gameView {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
     }
 }
 
@@ -48,11 +76,8 @@ h3 {
     height: 100vh;
 }
 
-.card {
+.lobby {
     display: flex;
-    border: 1px solid black;
-    border-radius: 0%;
-    height: 100px;
-    flex-direction: column;
-    margin: 10px;
+    flex-direction: row;
+    justify-content: center;
 }
