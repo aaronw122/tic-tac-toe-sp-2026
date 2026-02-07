@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./app.css";
 import services from "./services/index";
 import { type ShortLobbyReact } from "../types/types";
@@ -57,7 +57,13 @@ function App() {
         <Lobby lobby={lobby!} switchState={switchState} addGame={addGame} />
       );
     } else if (currentView === "game") {
-      return <Game id={gameId!} switchState={switchState} />;
+      return (
+        <Game
+          id={gameId!}
+          switchState={switchState}
+          currentView={currentView}
+        />
+      );
     } else if (currentView === "createGame") {
       return (
         <CreateGame

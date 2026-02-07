@@ -1,14 +1,16 @@
 import express, { type Request, type Response } from 'express';
+import expressWs, { type Application } from 'express-ws'
 import cors from 'cors';
-import type { Player, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby } from './types/types';
+import type { Player, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby, WSmap } from './types/types';
 import {game1, game2, gameStateEmpty} from './utils/testHelper'
 
-const app = express()
+const { app } = expressWs(express())
 
 app.use(express.json())
 
 app.use(cors({ origin: "http://localhost:5173" }))
 
+//data stored
 
 const lobby: Lobby = new Map([
   ['1', game1],
@@ -21,7 +23,34 @@ for (const [key, value] of lobby) {
   shortLobby.set(key, value.name)
 }
 
+//initial websocket
+const wsMap: WSmap = new Map<string, Set<WebSocket>>
+
+app.ws('/game/:id/ws', (ws, req) => {
+  //should i be doing a type assertion here?
+
+  const id = req.params.id as string
+
+  //create web socket
+  wsMap.set(id, new Set())
+
+  //add new websocket connection with set add method
+  wsMap.get(id)!.add(ws)
+
+  ws.send('hello')
+
+  ws.on('close', () => {
+    //delete array in server
+    // client handles disconnect
+  })
+
+  //error handling.
+  // if id not availabe;
+})
+
 console.log('short lobby', shortLobby)
+
+  //helper functions
 
 const reversePlayer = (id : string) => {
   const game = lobby.get(id)!
@@ -64,6 +93,8 @@ const checkWinner = (newBoard: Board, player: Player) => {
   console.log('null')
   return null;
 }
+
+//REST requests
 
 app.get('/lobby', async (req: Request, res: Response) => {
   const toObject = Object.fromEntries(shortLobby)

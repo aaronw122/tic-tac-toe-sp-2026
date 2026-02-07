@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 import {
   type GameState,
@@ -13,11 +13,30 @@ import services from "../services/index";
 type gameType = {
   id: string;
   switchState: switchState;
+  currentView: string;
 };
 
-const Game = ({ id, switchState }: gameType) => {
+const Game = ({ id, switchState, currentView }: gameType) => {
   const [topMessage, setTopMessage] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const webSocket = useRef<WebSocket | null>(null);
+  const [socketOn, setSocketOn] = useState<true | false>(false);
+
+  const socketConnect = useCallback(() => {
+    const ws = new WebSocket(`ws://localhost:5173/game/${id}/ws`);
+
+    webSocket.current = ws;
+
+    ws.onopen = () => {
+      console.log("socket connected!");
+    };
+
+    //error handling, flesh
+  }, [id]);
+
+  useEffect(() => {
+    socketConnect();
+  }, [id, socketConnect]);
 
   useEffect(() => {
     services.getGame(id).then((r) => setGameState(r.gameState));

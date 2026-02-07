@@ -1,3 +1,5 @@
+import type { WebSocket } from 'express-ws'
+
 export type Player = "X" | "O";
 
 export type Cell = Player | null;
@@ -31,5 +33,7 @@ export type ShortLobby = Map<string, string>
 export type ShortLobbyReact = {
   [someLabel: string]: string
 }
+
+export type WSmap = Map<string, Set<WebSocket>>
 
 export type switchState = (view: string, id?: string ) => void;
