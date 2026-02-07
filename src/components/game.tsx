@@ -126,13 +126,15 @@ const Game = ({ id, switchState }: gameType) => {
       {gameState ? (
         <div className="app">
           <h1>Tic tac toe</h1>
-          {socketOn ? <p>🟢 connected </p> : <p>🔴 disconnected</p>}
-          {topMessage ? (
-            <Message msg={topMessage}></Message>
-          ) : (
-            <h3>current player: {gameState.currentPlayer}</h3>
-          )}
-          <button onClick={() => switchState("lobby")}>back</button>
+          <div>
+            {socketOn ? <p>🟢 connected </p> : <p>🔴 disconnected</p>}
+            {topMessage ? (
+              <Message msg={topMessage}></Message>
+            ) : (
+              <h3>current player: {gameState.currentPlayer}</h3>
+            )}
+          </div>
+          <button onClick={() => switchState("lobby")}>← back</button>
           <Grid gameState={gameState} handleMove={handleMove}></Grid>
         </div>
       ) : (
