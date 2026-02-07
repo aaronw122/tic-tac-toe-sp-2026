@@ -9,24 +9,29 @@ type Body = {
   player: Player
 }
 
-const getGame = async () => {
-  const response = await axios.get(`${baseURL}/game`)
+const getLobby = async () => {
+  const response = await axios.get(`${baseURL}/lobby`)
   return response.data
 }
 
-const makeMove = async (newObj: Body) => {
-  const response = await axios.post(`${baseURL}/game`, newObj)
+const addGame = async (name: string) => {
+  const response = await axios.post(`${baseURL}/lobby`, { name })
   return response.data
 }
 
-const getWinner = async () => {
-  const response = await axios.get(`${baseURL}/winner`)
+const getGame = async (id: string) => {
+  const response = await axios.get(`${baseURL}/game/${id}`)
   return response.data
 }
 
-const newGame = async (): Promise<winnerAndState> => {
-  const response = await axios.post(`${baseURL}/newGame`)
+const makeMove = async (newObj: Body, id:string) => {
+  const response = await axios.post(`${baseURL}/game/${id}`, newObj)
   return response.data
 }
 
-export default {getGame, makeMove, getWinner, newGame}
+const newGame = async (id: string): Promise<winnerAndState> => {
+  const response = await axios.post(`${baseURL}/newGame/${id}`)
+  return response.data
+}
+
+export default {getLobby, addGame, getGame, makeMove, newGame}

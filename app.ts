@@ -69,6 +69,7 @@ app.get('/lobby', async (req: Request, res: Response) => {
   const toObject = Object.fromEntries(shortLobby)
   console.log('short lobby jsonified', toObject )
   console.log('specific lobby object', toObject[1])
+  console.log('type for key', typeof Object.keys(toObject)[1])
   res.json(toObject)
 })
 
@@ -86,7 +87,11 @@ app.post('/lobby', async (req: Request, res: Response) => {
 
   //properly parse so i get the name
   //comes in as name, then updated here. does it need to be object?
-  const name: string = req.body.name
+  //
+  console.log('request body for express', req.body)
+  const {name} = req.body
+
+  console.log('name from lobby post', name)
 
   //check for erorrs
   // name duplicate

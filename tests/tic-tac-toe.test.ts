@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, assert } from "vitest";
-import { type Lobby, type GameState, type winnerAndState } from "../types/types.ts";
-import { lobbyExample, gameStateEmpty, game1, game2, shortLobbyAfterRes } from '../utils/testHelper.ts'
+import { type winnerAndState } from "../types/types.ts";
+import { gameStateEmpty, game2, shortLobbyAfterRes, game2AfterClear } from '../utils/testHelper.ts'
 import app from '../app.ts'
 import supertest from 'supertest'
 const api = supertest(app)
@@ -14,7 +14,6 @@ const playMoves = async (id:string, ...positions: number[]): Promise<winnerAndSt
       .post(`/game/${id}`)
       .send({ player, position });
   }
-  console.log('final return')
   const newState = await api.get(`/game/${id}`)
   return newState.body;
 }
@@ -28,12 +27,12 @@ beforeEach(async () => {
 // ---------------------------------------------------------------------------
 describe("createGame", () => {
   it("returns an empty board", async  () => {
-    const game = await api.post('/newGame');
+    const game = await api.post('/newGame/1');
     expect(game.body.gameState.board).toEqual([null, null, null, null, null, null, null, null, null]);
   });
 
   it("starts with X as the current player", async () => {
-    const game = await api.post('/newGame');
+    const game = await api.post('/newGame/1');
     expect(game.body.gameState.currentPlayer).toBe("X");
   });
 });
@@ -75,7 +74,6 @@ describe("makeMove", () => {
     const position = 4
     await api.post('/game/1').send({ player, position })
     const newState = await api.get('/game/1')
-    console.log('newState', newState.body)
     expect(currentState.body.gameState.board[4]).toBeNull();
     expect(newState.body.gameState.board[4]).toBe("X");
   });
@@ -93,7 +91,6 @@ describe("makeMove", () => {
     const currentState = await api.get('/game/1')
     const player = currentState.body.gameState.currentPlayer
     const position = -1
-    console.log('position test', position)
     const post = await api.post('/game/1').send({ player, position })
     assert.deepStrictEqual(post.body, { error: "Position must be between 0 and 8" },);
   });
@@ -102,7 +99,6 @@ describe("makeMove", () => {
     const currentState = await api.get('/game/1')
     const player = currentState.body.gameState.currentPlayer
     const position = 9
-    console.log('position test', position)
     const post = await api.post('/game/1').send({ player, position })
     assert.deepStrictEqual(post.body, { error: "Position must be between 0 and 8" },);
   });
@@ -111,7 +107,6 @@ describe("makeMove", () => {
     const currentState = await api.get('/game/1')
     const player = currentState.body.gameState.currentPlayer
     const position = 2.5
-    console.log('position test', position)
     const post = await api.post('/game/1').send({ player, position })
     assert.deepStrictEqual(post.body, { error: "Position must be an integer" },);
   });
@@ -283,15 +278,12 @@ describe("full game sequences", () => {
 
     let start = await api.get('/game/1')
 
-    console.log('start status', start)
-
     const moves = [4, 0, 1, 3, 7];
 
     const arr = [];
 
     arr.push(start.body)
     for (const position of moves) {
-      console.log('inside')
       const player = start.body.gameState.currentPlayer
       await api
         .post('/game/1')
@@ -300,7 +292,6 @@ describe("full game sequences", () => {
       arr.push(start.body)
     }
 
-    console.log('null board', arr[0].gameState.board)
     // Verify each intermediate state is unchanged
     const nullBoard = [null, null, null, null, null, null, null, null, null]
     assert.deepStrictEqual(arr[0].gameState.board, nullBoard)
@@ -315,8 +306,6 @@ describe('lobby tests', () => {
     //by default will return two games in lobby
     const testData = shortLobbyAfterRes;
 
-    console.log('lobby body', lobby.body)
-
     assert.deepStrictEqual(lobby.body, testData)
   });
 
@@ -329,8 +318,6 @@ describe('lobby tests', () => {
 
     //how lobbyId will look in response to client
     const id = newGame.body.id
-
-    console.log('gameId', id)
 
     const lobbyAfterPost = await api.get('/lobby');
 
@@ -345,17 +332,9 @@ describe('lobby tests', () => {
 
     const lobbyName = 'blazing saddles'
 
-    const lobby3 = {
-      name: "blazing saddles",
-      gameState: gameStateEmpty,
-      winner: null
-    }
-
     const newGame = await api.post('/lobby').send({ name: lobbyName })
 
     const id = newGame.body.id
-
-    console.log('new gameID',id)
 
     const lobbyAfterPost = await api.get('/lobby');
 
@@ -377,6 +356,18 @@ describe('lobby tests', () => {
     const game10 = await api.get('/game/10');
 
     assert.deepStrictEqual(game10.body, { error: "Game does not exist" })
+  })
+
+  it('properly refreshes game', async () => {
+
+    const initialGame = await api.get('/game/2')
+
+    await api.post('/newGame/2')
+
+    const postGame = await api.get('/game/2')
+
+    assert.deepStrictEqual(initialGame.body, game2)
+    assert.deepStrictEqual(postGame.body, game2AfterClear)
   })
 
   it('delete game works', async () => {

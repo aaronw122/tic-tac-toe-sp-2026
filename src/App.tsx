@@ -1,71 +1,74 @@
 import { useState, useEffect } from "react";
-import {
-  type GameState,
-  type Player,
-  type winnerAndState,
-} from "../types/types";
-import Grid from "./components/grid";
-import Message from "./components/topMessage";
 import "./app.css";
 import services from "./services/index";
+import { type ShortLobbyReact } from "../types/types";
+import Lobby from "./components/lobby";
+import Game from "./components/game";
+import CreateGame from "./components/createGame";
 
 function App() {
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  const [topMessage, setTopMessage] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<string>("lobby");
+  const [lobby, setLobby] = useState<ShortLobbyReact | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [newGameName, setNewGameName] = useState<string>("");
 
   useEffect(() => {
-    services.getGame().then((r) => setGameState(r.gameState));
-  }, []);
+    services.getLobby().then((r) => {
+      console.log("response object", r);
+      setLobby(r);
+    });
+  }, [currentView]);
 
-  const resetGame = async () => {
-    setTopMessage(null);
-    const newGame: winnerAndState = await services.newGame();
-    setGameState(newGame.gameState);
+  console.log("short lobby", lobby);
+
+  const switchState = (view: string, id?: string) => {
+    console.log("function fired");
+    console.log("data sent", view);
+    setCurrentView(view);
+
+    if (view !== "game") {
+      console.log("set id to null");
+      setGameId(null);
+    }
+    //will this setter below be a problem?
+    // we will need to set it to null when currentView switches
+    if (id) {
+      setGameId(id);
+    }
   };
 
-  const handleMove = async (player: Player, position: number) => {
-    if (gameState!.board[position] !== null) {
-      setTopMessage("error: position already taken");
-      setTimeout(() => {
-        setTopMessage(null);
-      }, 1000);
-      return;
-    }
+  const handleNameChange = (event: any) => {
+    setNewGameName(event.target.value);
+  };
 
-    const newState = await services.makeMove({ position, player });
+  const addGame = async () => {
+    const response = await services.addGame(newGameName);
+    console.log("response", response);
+    const id = response.id;
+    //update setter with id. its fine since it will finish this first, then show the new view?
+    setGameId(id);
+    setCurrentView("game");
+    setNewGameName("");
+  };
 
-    setGameState(newState.gameState);
-
-    if (newState.winner !== null) {
-      setTopMessage(
-        newState.winner === "CATS"
-          ? `Cats game`
-          : `${newState.winner} won the game!`,
+  const appView = () => {
+    if (currentView === "lobby") {
+      return (
+        <Lobby lobby={lobby!} switchState={switchState} addGame={addGame} />
       );
-      setTimeout(() => {
-        resetGame();
-      }, 1000);
+    } else if (currentView === "game") {
+      return <Game id={gameId!} switchState={switchState} />;
+    } else if (currentView === "createGame") {
+      return (
+        <CreateGame
+          handleNameChange={handleNameChange}
+          addGame={addGame}
+          newGameName={newGameName}
+        />
+      );
     }
   };
 
-  // TODO: display the gameState, and call `makeMove` when a player clicks a button
-  return (
-    <div>
-      {gameState ? (
-        <div className="app">
-          <h1>Tic tac toe</h1>
-          {topMessage ? (
-            <Message msg={topMessage}></Message>
-          ) : (
-            <h3>current player: {gameState.currentPlayer}</h3>
-          )}
-          <Grid gameState={gameState} handleMove={handleMove}></Grid>
-        </div>
-      ) : (
-        <div> loading</div>
-      )}
-    </div>
-  );
+  return <div className="app">{appView()}</div>;
 }
-
 export default App;

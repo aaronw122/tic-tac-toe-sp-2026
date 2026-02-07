@@ -22,6 +22,12 @@ export const game2: winnerAndState = {
   winner: null
 }
 
+export const game2AfterClear: winnerAndState = {
+  name: "x vs o",
+  gameState: gameStateEmpty,
+  winner: null
+}
+
 export const lobbyExample: Lobby = new Map([
   ['1', game1],
   ['2', game2]
