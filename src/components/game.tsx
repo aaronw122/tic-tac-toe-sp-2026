@@ -3,7 +3,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   type GameState,
   type Player,
-  type winnerAndState,
   type switchState,
 } from "../../types/types";
 import Grid from "./grid";
@@ -16,55 +15,58 @@ type gameType = {
   currentView: string;
 };
 
-const Game = ({ id, switchState, currentView }: gameType) => {
+const Game = ({ id, switchState }: gameType) => {
   const [topMessage, setTopMessage] = useState<string | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const webSocket = useRef<WebSocket | null>(null);
   const [socketOn, setSocketOn] = useState<true | false>(false);
   const [winner, setWinner] = useState<string | null>(null);
 
-  const socketConnect = useCallback(() => {
-    const ws = new WebSocket(`ws://localhost:5173/game/${id}/ws`);
+  const socketConnect = useCallback(
+    function connect() {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws";
+      const ws = new WebSocket(`${protocol}//tictac.ctas.us/game/${id}/ws`);
 
-    webSocket.current = ws;
+      webSocket.current = ws;
 
-    ws.onopen = () => {
-      console.log("socket connected!");
-      setSocketOn(true);
-    };
-
-    //on message, change gameState
-    ws.onmessage = (event) => {
-      try {
-        //will receive the full winnerAndState prop, not just gameState
-        const data = JSON.parse(event.data);
-        if (data.type === "updateGame") {
-          setGameState(data.winnerAndState.gameState);
-          setWinner(data.winnerAndState.winner);
+      ws.onopen = () => {
+        console.log("socket connected!");
+        setSocketOn(true);
+      };
+      //on message, change gameState
+      ws.onmessage = (event) => {
+        try {
+          //will receive the full winnerAndState prop, not just gameState
+          const data = JSON.parse(event.data);
+          if (data.type === "updateGame") {
+            setGameState(data.winnerAndState.gameState);
+            setWinner(data.winnerAndState.winner);
+          }
+        } catch (error) {
+          console.error("failed to parse message", error);
         }
-      } catch (error) {
-        console.error("failed to parse message", error);
-      }
-    };
+      };
 
-    ws.onclose = (event) => {
-      setSocketOn(false);
-      console.log("websocket disconnected");
+      ws.onclose = (event) => {
+        setSocketOn(false);
+        console.log("websocket disconnected");
 
-      if (event.code === 1008) {
-        console.log("game not found");
-        switchState("lobby");
-      } else {
-        setTimeout(socketConnect, 4000);
-      }
-    };
+        if (event.code === 1008) {
+          console.log("game not found");
+          switchState("lobby");
+        } else {
+          setTimeout(connect, 4000);
+        }
+      };
 
-    ws.onerror = (error) => {
-      console.log("websocket error:", error);
-      setSocketOn(false);
-    };
-    //error handling, flesh. added switchState as dependency since it will impact connection
-  }, [id, switchState]);
+      ws.onerror = (error) => {
+        console.log("websocket error:", error);
+        setSocketOn(false);
+      };
+      //error handling, flesh. added switchState as dependency since it will impact connection
+    },
+    [id, switchState],
+  );
 
   useEffect(() => {
     services.getGame(id).then((r) => setGameState(r.gameState));
@@ -124,6 +126,7 @@ const Game = ({ id, switchState, currentView }: gameType) => {
       {gameState ? (
         <div className="app">
           <h1>Tic tac toe</h1>
+          {socketOn ? <p>🟢 connected </p> : <p>🔴 disconnected</p>}
           {topMessage ? (
             <Message msg={topMessage}></Message>
           ) : (

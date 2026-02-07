@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import "./app.css";
 import services from "./services/index";
 import { type ShortLobbyReact } from "../types/types";
@@ -37,7 +37,9 @@ function App() {
     }
   };
 
-  const handleNameChange = (event: any) => {
+  const handleNameChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setNewGameName(event.target.value);
   };
 

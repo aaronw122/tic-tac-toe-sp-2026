@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { type ShortLobbyReact, type switchState } from "../../types/types";
 import GameCard from "./gameCard";
 

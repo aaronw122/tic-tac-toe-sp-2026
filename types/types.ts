@@ -1,4 +1,4 @@
-import type { WebSocket } from 'express-ws'
+import type { WebSocket } from 'ws'
 
 export type Player = "X" | "O";
 

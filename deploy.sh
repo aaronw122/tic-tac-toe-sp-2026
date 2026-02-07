@@ -5,7 +5,7 @@ set -euo pipefail #enables strict mode
 CONTEXT="home" #sets variable i already have saved for my home server
 
 echo "Building and starting stack on remote server"
-docker --context "$CONTEXT" compose up -d --build --remove-orphans
+docker --context "$CONTEXT" compose up -d --build --force-recreate --remove-orphans
 #runs docker compose against home context.
 # d runs in detached mode
 # build rebuilds images before startin

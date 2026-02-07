@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, assert } from "vitest";
 import { type winnerAndState } from "../types/types.ts";
-import { gameStateEmpty, game2, shortLobbyAfterRes, game2AfterClear } from '../utils/testHelper.ts'
+import { game2, shortLobbyAfterRes, game2AfterClear } from '../utils/testHelper.ts'
 import app from '../app.ts'
 import supertest from 'supertest'
 const api = supertest(app)

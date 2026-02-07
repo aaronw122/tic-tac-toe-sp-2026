@@ -2,7 +2,7 @@ import axios from 'axios'
 import {type Player, type winnerAndState} from '../../types/types'
 
 
-const baseURL = 'http://localhost:5173'
+const baseURL = 'https://tictac.ctas.us'
 
 type Body = {
   position: number,

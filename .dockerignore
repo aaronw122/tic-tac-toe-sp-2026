@@ -3,3 +3,16 @@ node_modules
 .git
 
 .gitignore
+
+src
+tests
+
+index.html
+
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+eslint.config.js
+README.md
+.claude
+.zed

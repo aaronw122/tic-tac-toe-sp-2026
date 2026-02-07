@@ -1,8 +1,8 @@
-FROM oven/bun:1 as base
+FROM oven/bun:1 AS base
 
-WORKDIR /usr
+WORKDIR /usr/src/app
 
-FROM base as install
+FROM base AS install
 
 RUN mkdir -p /temp/dev
 
@@ -10,8 +10,14 @@ COPY package.json bun.lock /temp/dev/
 
 RUN cd /temp/dev && bun install --frozen-lockfile
 
-RUN mkdir -p /
+FROM base AS prerelease
+COPY --from=install /temp/dev/node_modules node_modules
+COPY . .
 
-EXPOSE 80
+RUN chown -R bun:bun /usr/src/app
 
-CMD ["nginx", "-g", "daemon off;"]
+USER bun
+
+EXPOSE 5173/tcp
+
+CMD ["bun", "run", "server.ts"]

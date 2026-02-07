@@ -1,4 +1,4 @@
-import type { Lobby, winnerAndState, GameState, ShortLobby } from '../types/types'
+import type { Lobby, winnerAndState, GameState} from '../types/types'
 
 export const gameStateEmpty: GameState = {
   board: [null, null, null, null, null, null, null, null, null],

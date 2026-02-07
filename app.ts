@@ -1,14 +1,21 @@
 import express, { type Request, type Response } from 'express';
-import expressWs from 'express-ws'
+import expressWs, {type Application} from 'express-ws'
 import cors from 'cors';
 import type { Player, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby, WSmap } from './types/types';
 import {game1, game2, gameStateEmpty} from './utils/testHelper'
+import type { WebSocket } from 'ws';
 
-const { app } = expressWs(express())
+const app = express()
+
+expressWs(app)
+
+const wsApp = app as unknown as Application;
 
 app.use(express.json())
 
-app.use(cors({ origin: "http://localhost:5173" }))
+app.use(express.static('dist'))
+
+app.use(cors({ origin: "https://tictac.ctas.us" }))
 
 //data stored
 
@@ -33,7 +40,6 @@ const sendGameUpdate = (id: string, winnerAndState: winnerAndState) => {
 
   if (connections) {
     connections.forEach(ws => {
-      const mock = JSON.stringify({type: 'updateGame', winnerAndState})
       console.log('ready state?', ws.readyState)
       //checks status of connection, if open send message
       if (ws.readyState === ws.OPEN) {
@@ -46,7 +52,7 @@ const sendGameUpdate = (id: string, winnerAndState: winnerAndState) => {
   }
 }
 
-app.ws('/game/:id/ws', (ws, req) => {
+wsApp.ws('/game/:id/ws', (ws:WebSocket, req) => {
 
   //should i be doing a type assertion here?
   const id = req.params.id as string
@@ -137,7 +143,7 @@ const checkWinner = (newBoard: Board, player: Player) => {
 
 //REST requests
 
-app.get('/lobby', async (req: Request, res: Response) => {
+app.get('/lobby', async (_req: Request, res: Response) => {
   const toObject = Object.fromEntries(shortLobby)
   console.log('short lobby jsonified', toObject )
   console.log('specific lobby object', toObject[1])
@@ -145,7 +151,7 @@ app.get('/lobby', async (req: Request, res: Response) => {
   res.json(toObject)
 })
 
-app.get('/resetLobby', async (req: Request, res: Response) => {
+app.get('/resetLobby', async (_req: Request, res: Response) => {
   lobby.set('1', game1)
   lobby.set('2', game2)
 

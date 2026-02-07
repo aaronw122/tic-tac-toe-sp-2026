@@ -3,7 +3,9 @@
 // sheet with input field, simple FSO stuff
 
 type createGameTypes = {
-  handleNameChange: (event: unknown) => void;
+  handleNameChange: (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => void;
   addGame: () => void;
   newGameName: string;
 };
