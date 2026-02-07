@@ -8,7 +8,7 @@ type card = {
 
 const GameCard = ({ name, id, switchState }: card) => {
   return (
-    <div className="card" onClick={() => switchState(id, "game")}>
+    <div className="card" onClick={() => switchState("game", id)}>
       <p>{name}</p>
     </div>
   );

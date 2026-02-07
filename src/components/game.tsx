@@ -17,6 +17,8 @@ const Game = ({ id }: { id: string }) => {
     services.getGame(id).then((r) => setGameState(r.gameState));
   }, [id]);
 
+  console.log("gameState", gameState);
+
   const resetGame = async () => {
     setTopMessage(null);
     const newGame: winnerAndState = await services.newGame(id);

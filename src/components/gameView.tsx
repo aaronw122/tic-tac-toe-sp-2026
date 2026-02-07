@@ -14,7 +14,6 @@ const GameView = ({ lobby, switchState }: gameView) => {
     <div className="gameView">
       {lobbyKeys.map((el: string) => {
         const value = lobby[el];
-        console.log(value);
         return (
           <GameCard key={el} name={value} id={el} switchState={switchState} />
         );
