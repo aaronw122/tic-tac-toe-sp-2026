@@ -21,6 +21,7 @@ const Game = ({ id, switchState, currentView }: gameType) => {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const webSocket = useRef<WebSocket | null>(null);
   const [socketOn, setSocketOn] = useState<true | false>(false);
+  const [winner, setWinner] = useState<string | null>(null);
 
   const socketConnect = useCallback(() => {
     const ws = new WebSocket(`ws://localhost:5173/game/${id}/ws`);
@@ -29,25 +30,79 @@ const Game = ({ id, switchState, currentView }: gameType) => {
 
     ws.onopen = () => {
       console.log("socket connected!");
+      setSocketOn(true);
     };
 
-    //error handling, flesh
-  }, [id]);
+    //on message, change gameState
+    ws.onmessage = (event) => {
+      try {
+        //will receive the full winnerAndState prop, not just gameState
+        const data = JSON.parse(event.data);
+        if (data.type === "updateGame") {
+          setGameState(data.winnerAndState.gameState);
+          setWinner(data.winnerAndState.winner);
+        }
+      } catch (error) {
+        console.error("failed to parse message", error);
+      }
+    };
 
-  useEffect(() => {
-    socketConnect();
-  }, [id, socketConnect]);
+    ws.onclose = (event) => {
+      setSocketOn(false);
+      console.log("websocket disconnected");
+
+      if (event.code === 1008) {
+        console.log("game not found");
+        switchState("lobby");
+      } else {
+        setTimeout(socketConnect, 4000);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.log("websocket error:", error);
+      setSocketOn(false);
+    };
+    //error handling, flesh. added switchState as dependency since it will impact connection
+  }, [id, switchState]);
 
   useEffect(() => {
     services.getGame(id).then((r) => setGameState(r.gameState));
   }, [id]);
 
+  console.log("winner check", winner);
+  //place this below the useEffect where we fetchgame state
+
+  useEffect(() => {
+    socketConnect();
+
+    // returns inside use effect always imply when
+    return () => {
+      if (webSocket.current) {
+        webSocket.current.close();
+        webSocket.current = null;
+      }
+    };
+  }, [id, socketConnect]);
+
+  //run when winner changes inside new useEffect
+  useEffect(() => {
+    if (winner !== null) {
+      console.log("inside conditional");
+      setTopMessage(
+        winner === "CATS" ? `Cats game` : `${winner} won the game!`,
+      );
+      setTimeout(() => {
+        setTopMessage(null);
+        services.newGame(id);
+      }, 1000);
+    }
+  }, [winner, id]);
+
   console.log("gameState", gameState);
 
-  const resetGame = async () => {
-    setTopMessage(null);
-    const newGame: winnerAndState = await services.newGame(id);
-    setGameState(newGame.gameState);
+  const checkWinner = () => {
+    console.log("winner should be x", winner);
   };
 
   const handleMove = async (player: Player, position: number) => {
@@ -59,20 +114,9 @@ const Game = ({ id, switchState, currentView }: gameType) => {
       return;
     }
 
-    const newState = await services.makeMove({ position, player }, id);
+    await services.makeMove({ position, player }, id);
 
-    setGameState(newState.gameState);
-
-    if (newState.winner !== null) {
-      setTopMessage(
-        newState.winner === "CATS"
-          ? `Cats game`
-          : `${newState.winner} won the game!`,
-      );
-      setTimeout(() => {
-        resetGame();
-      }, 1000);
-    }
+    checkWinner();
   };
 
   return (

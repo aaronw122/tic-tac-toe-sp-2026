@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import expressWs, { type Application } from 'express-ws'
+import expressWs from 'express-ws'
 import cors from 'cors';
 import type { Player, Board, GameState, Winner, winnerAndState, Lobby, ShortLobby, WSmap } from './types/types';
 import {game1, game2, gameStateEmpty} from './utils/testHelper'
@@ -26,26 +26,67 @@ for (const [key, value] of lobby) {
 //initial websocket
 const wsMap: WSmap = new Map<string, Set<WebSocket>>
 
-app.ws('/game/:id/ws', (ws, req) => {
-  //should i be doing a type assertion here?
+const sendGameUpdate = (id: string, winnerAndState: winnerAndState) => {
+  const connections = wsMap.get(id)
 
+  console.log('updating game, connections:', connections)
+
+  if (connections) {
+    connections.forEach(ws => {
+      const mock = JSON.stringify({type: 'updateGame', winnerAndState})
+      console.log('ready state?', ws.readyState)
+      //checks status of connection, if open send message
+      if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'updateGame',
+          winnerAndState
+        }));
+      }
+    });
+  }
+}
+
+app.ws('/game/:id/ws', (ws, req) => {
+
+  //should i be doing a type assertion here?
   const id = req.params.id as string
 
-  //create web socket
-  wsMap.set(id, new Set())
+  if (!lobby.has(id)) {
+    ws.close(1008, 'game not found')
+    return;
+  }
 
-  //add new websocket connection with set add method
-  wsMap.get(id)!.add(ws)
+  //check if ws map does not already contian the game id, if so create new id with set
+  if (!wsMap.has(id)) {
+    wsMap.set(id, new Set());
+  }
 
-  ws.send('hello')
+  //add websocket to Set
+  wsMap.get(id)!.add(ws);
 
+  //send winnerAndState to client
+  const winnerAndState = lobby.get(id);
+  if (winnerAndState) {
+    ws.send(JSON.stringify({
+      type: 'updateGame',
+      winnerAndState
+    }));
+  }
+
+  //handle disconnect when client sends close
   ws.on('close', () => {
-    //delete array in server
-    // client handles disconnect
+    const connections = wsMap.get(id)
+    if (connections) {
+      connections.delete(ws)
+      if (connections.size === 0) {
+        wsMap.delete(id)
+      }
+    }
   })
 
-  //error handling.
-  // if id not availabe;
+  ws.on('error', (error) => {
+    console.error('websocket error:', error)
+  })
 })
 
 console.log('short lobby', shortLobby)
@@ -223,6 +264,8 @@ app.post('/game/:id', async (req: Request, res: Response) => {
 
   lobby.set(id, newGame)
 
+  sendGameUpdate(id, newGame);
+
   console.log('full lobby', lobby)
   console.log('new state', newGame)
   //sends back new game object
@@ -262,6 +305,7 @@ app.post('/newGame/:id', async (req: Request, res: Response) => {
   }
 
   lobby.set(id, newGame)
+  sendGameUpdate(id, newGame);
 
   console.log('full lobby', lobby)
   console.log('new state', newGame)
