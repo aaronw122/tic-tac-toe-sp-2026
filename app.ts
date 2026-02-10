@@ -15,7 +15,7 @@ app.use(express.json())
 
 app.use(express.static('dist'))
 
-app.use(cors({ origin: "https://tictac.ctas.us" }))
+app.use(cors({ origin: process.env.CORS_ORIGIN }))
 
 //data stored
 
@@ -24,11 +24,6 @@ const lobby: Lobby = new Map([
   ['2', game2]
 ])
 
-const shortLobby: ShortLobby = new Map([]) as ShortLobby
-
-for (const [key, value] of lobby) {
-  shortLobby.set(key, value.name)
-}
 
 //initial websocket
 const wsMap: WSmap = new Map<string, Set<WebSocket>>
@@ -95,7 +90,6 @@ wsApp.ws('/game/:id/ws', (ws:WebSocket, req) => {
   })
 })
 
-console.log('short lobby', shortLobby)
 
   //helper functions
 
@@ -144,6 +138,15 @@ const checkWinner = (newBoard: Board, player: Player) => {
 //REST requests
 
 app.get('/lobby', async (_req: Request, res: Response) => {
+
+  const shortLobby: ShortLobby = new Map([]) as ShortLobby
+
+
+  for (const [key, value] of lobby) {
+    shortLobby.set(key, value.name)
+  }
+
+
   const toObject = Object.fromEntries(shortLobby)
   console.log('short lobby jsonified', toObject )
   console.log('specific lobby object', toObject[1])
@@ -184,10 +187,7 @@ app.post('/lobby', async (req: Request, res: Response) => {
 
   lobby.set(id, newGame)
 
-  shortLobby.set(id, name)
-
   console.log('new object in lobby', lobby.get(id))
-  console.log('new object in shortLobby', shortLobby.get(id))
 
   console.log('new lobby', lobby)
 
@@ -284,10 +284,8 @@ app.delete('/game/:id', async (req: Request, res: Response) => {
   //bc im only referencing one game object, i don't need to jsonify, already just an object
   lobby.delete(id)
 
-  shortLobby.delete(id)
 
   console.log('new lobby without id', lobby)
-  console.log('new shortlobby without id', shortLobby)
 
   return res.status(200).end()
 })

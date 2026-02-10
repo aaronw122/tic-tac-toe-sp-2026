@@ -25,7 +25,9 @@ const Game = ({ id, switchState }: gameType) => {
   const socketConnect = useCallback(
     function connect() {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws";
-      const ws = new WebSocket(`${protocol}//tictac.ctas.us/game/${id}/ws`);
+      const ws = new WebSocket(
+        `${protocol}//${import.meta.env.VITE_API_URL}/game/${id}/ws`,
+      );
 
       webSocket.current = ws;
 
@@ -89,16 +91,19 @@ const Game = ({ id, switchState }: gameType) => {
 
   //run when winner changes inside new useEffect
   useEffect(() => {
+    let timer: number;
     if (winner !== null) {
       console.log("inside conditional");
       setTopMessage(
         winner === "CATS" ? `Cats game` : `${winner} won the game!`,
       );
-      setTimeout(() => {
+      timer = window.setTimeout(() => {
         setTopMessage(null);
         services.newGame(id);
       }, 1000);
     }
+    //cancels a timer.
+    return () => clearTimeout(timer);
   }, [winner, id]);
 
   console.log("gameState", gameState);
