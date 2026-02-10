@@ -2,7 +2,7 @@ import axios from 'axios'
 import {type Player, type winnerAndState} from '../../types/types'
 
 
-const baseURL = 'https://tictac.ctas.us'
+const baseURL = `${window.location.protocol}//${import.meta.env.VITE_API_URL}`
 
 type Body = {
   position: number,

@@ -3,8 +3,11 @@ services:
     build: .
     image: tic_tac:latest
     ports:
-      - "65:5173"
+      - "2052:5173"
     restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - CORS_ORIGIN=https://tictac.ctas.us
 
 #defines service named tic_tac, builds image from Dockerfile in current directory
 #tag the built image as latest

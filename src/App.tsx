@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./app.css";
 import services from "./services/index";
 import { type ShortLobbyReact } from "../types/types";
@@ -13,15 +13,17 @@ function App() {
   const [newGameName, setNewGameName] = useState<string>("");
 
   useEffect(() => {
-    services.getLobby().then((r) => {
-      console.log("response object", r);
-      setLobby(r);
-    });
+    if (currentView === "lobby") {
+      services.getLobby().then((r) => {
+        console.log("response object", r);
+        setLobby(r);
+      });
+    }
   }, [currentView]);
 
   console.log("short lobby", lobby);
 
-  const switchState = (view: string, id?: string) => {
+  const switchState = useCallback((view: string, id?: string) => {
     console.log("function fired");
     console.log("data sent", view);
     setCurrentView(view);
@@ -35,7 +37,7 @@ function App() {
     if (id) {
       setGameId(id);
     }
-  };
+  }, []);
 
   const handleNameChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
